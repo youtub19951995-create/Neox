@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel - CyborX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="main.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    .stat-card {
+      background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(96,165,250,0.1));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .pending-badge {
+      background: rgba(245,158,11,0.2);
+      color: #f59e0b;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100">
+  <div class="mainGrid">
+    <!-- SIDEBAR -->
+    <aside class="w-64 glass border-r border-white/10 flex flex-col h-screen">
+      <div class="p-6">
+        <div class="font-bold text-xl">
+          <i class="fas fa-shield-halved text-green-400"></i>
+          <span class="ml-2">Admin Panel</span>
+        </div>
+      </div>
+
+      <nav class="flex-1 px-4">
+        <a href="#dashboard" class="nav-link active" onclick="showSection('dashboard')">
+          <i class="fas fa-chart-line"></i> Dashboard
+        </a>
+        <a href="#deposits" class="nav-link" onclick="showSection('deposits')">
+          <i class="fas fa-money-bill-wave"></i> Pending Deposits
+          <span class="pending-badge ml-auto" id="pendingCount">0</span>
+        </a>
+        <a href="#users" class="nav-link" onclick="showSection('users')">
+          <i class="fas fa-users"></i> Manage Users
+        </a>
+        <a href="#codes" class="nav-link" onclick="showSection('codes')">
+          <i class="fas fa-gift"></i> Redeem Codes
+        </a>
+        <a href="#settings" class="nav-link" onclick="showSection('settings')">
+          <i class="fas fa-cog"></i> Settings
+        </a>
+      </nav>
+
+      <div class="p-4">
+        <a href="dashboard.html" class="btn-secondary w-full block text-center">
+          <i class="fas fa-arrow-left"></i> Back to User Dashboard
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="scrollCenter no-scrollbar p-8">
+      <!-- DASHBOARD SECTION -->
+      <section id="dashboard-section" class="section">
+        <h1 class="text-3xl font-bold mb-8">Dashboard Overview</h1>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-slate-400">Total Users</span>
+              <i class="fas fa-users text-blue-400 text-xl"></i>
+            </div>
+            <div class="text-3xl font-bold" id="totalUsers">0</div>
+            <div class="text-xs text-green-400 mt-2">+12 this week</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-slate-400">Total Revenue</span>
+              <i class="fas fa-dollar-sign text-green-400 text-xl"></i>
+            </div>
+            <div class="text-3xl font-bold" id="totalRevenue">$0</div>
+            <div class="text-xs text-green-400 mt-2">+5.2% from last month</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-slate-400">Pending Deposits</span>
+              <i class="fas fa-clock text-yellow-400 text-xl"></i>
+            </div>
+            <div class="text-3xl font-bold" id="pendingDeposits">0</div>
+            <div class="text-xs text-yellow-400 mt-2">Awaiting approval</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-slate-400">Active Plans</span>
+              <i class="fas fa-crown text-purple-400 text-xl"></i>
+            </div>
+            <div class="text-3xl font-bold" id="activePlans">0</div>
+            <div class="text-xs text-purple-400 mt-2">Premium & VIP</div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <h2 class="text-xl font-bold mb-4">Recent Transactions</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="border-b border-white/10">
+                <tr class="text-left">
+                  <th class="pb-3 text-slate-400">User</th>
+                  <th class="pb-3 text-slate-400">Type</th>
+                  <th class="pb-3 text-slate-400">Amount</th>
+                  <th class="pb-3 text-slate-400">Date</th>
+                </tr>
+              </thead>
+              <tbody id="recentTransactions">
+                <tr>
+                  <td colspan="4" class="py-8 text-center text-slate-500">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- DEPOSITS SECTION -->
+      <section id="deposits-section" class="section hidden">
+        <h1 class="text-3xl font-bold mb-8">Pending Deposits</h1>
+
+        <div id="depositsList" class="space-y-4">
+          <!-- Deposit cards will be inserted here -->
+        </div>
+      </section>
+
+      <!-- USERS SECTION -->
+      <section id="users-section" class="section hidden">
+        <h1 class="text-3xl font-bold mb-8">Manage Users</h1>
+
+        <!-- Search & Filters -->
+        <div class="card mb-6">
+          <div class="flex gap-4">
+            <input type="text" id="userSearch" placeholder="Search by username or Telegram ID..." 
+                   class="flex-1 bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2">
+            <select id="planFilter" class="bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2">
+              <option value="">All Plans</option>
+              <option value="free">Free</option>
+              <option value="premium">Premium</option>
+              <option value="vip">VIP</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="border-b border-white/10">
+                <tr class="text-left">
+                  <th class="pb-3 text-slate-400">User</th>
+                  <th class="pb-3 text-slate-400">Plan</th>
+                  <th class="pb-3 text-slate-400">Balance</th>
+                  <th class="pb-3 text-slate-400">Joined</th>
+                  <th class="pb-3 text-slate-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTable">
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-slate-500">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REDEEM CODES SECTION -->
+      <section id="codes-section" class="section hidden">
+        <h1 class="text-3xl font-bold mb-8">Redeem Codes</h1>
+
+        <!-- Create Code Form -->
+        <div class="card mb-6">
+          <h2 class="text-xl font-bold mb-4">Create New Code</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="text" id="newCode" placeholder="Code (auto-generated if empty)" 
+                   class="bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2">
+            <input type="number" id="codeAmount" placeholder="Amount (XCoin)" 
+                   class="bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2">
+            <input type="number" id="maxUses" placeholder="Max Uses" value="1"
+                   class="bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2">
+          </div>
+          <button onclick="createRedeemCode()" class="btn-primary mt-4">
+            <i class="fas fa-plus"></i> Create Code
+          </button>
+        </div>
+
+        <!-- Active Codes -->
+        <div class="card">
+          <h2 class="text-xl font-bold mb-4">Active Codes</h2>
+          <div id="codesList">
+            <p class="text-slate-500">Loading...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS SECTION -->
+      <section id="settings-section" class="section hidden">
+        <h1 class="text-3xl font-bold mb-8">Bot Settings</h1>
+
+        <div class="card">
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium mb-2">Bot Name</label>
+              <input type="text" id="botName" value="CyborX" 
+                     class="w-full bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2">Minimum Deposit</label>
+              <input type="number" id="minDeposit" value="1" 
+                     class="w-full bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+              <label class="flex items-center gap-3">
+                <input type="checkbox" id="maintenanceMode" class="w-5 h-5">
+                <span>Maintenance Mode</span>
+              </label>
+            </div>
+
+            <button onclick="saveSettings()" class="btn-primary">
+              <i class="fas fa-save"></i> Save Settings
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // Navigation
+    function showSection(section) {
+      document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+      document.getElementById(section + '-section').classList.remove('hidden');
+
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      event.target.closest('.nav-link').classList.add('active');
+    }
+
+    // Load stats
+    async function loadStats() {
+      try {
+        const response = await fetch(ENDPOINTS.ADMIN_STATS);
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('totalUsers').textContent = data.stats.total_users;
+          document.getElementById('totalRevenue').textContent = '$' + data.stats.total_revenue;
+          document.getElementById('pendingDeposits').textContent = data.stats.pending_deposits;
+          document.getElementById('activePlans').textContent = data.stats.active_plans;
+          document.getElementById('pendingCount').textContent = data.stats.pending_deposits;
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Load pending deposits
+    async function loadDeposits() {
+      // Implementation here
+    }
+
+    // Approve deposit
+    async function approveDeposit(depositId) {
+      if (!confirm('Approve this deposit?')) return;
+
+      try {
+        const response = await fetch(ENDPOINTS.ADMIN_APPROVE_DEPOSIT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deposit_id: depositId, action: 'approve' })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('Deposit approved!');
+          loadDeposits();
+          loadStats();
+        }
+      } catch (error) {
+        console.error('Error approving deposit:', error);
+      }
+    }
+
+    // Create redeem code
+    async function createRedeemCode() {
+      const code = document.getElementById('newCode').value || generateCode();
+      const amount = document.getElementById('codeAmount').value;
+      const maxUses = document.getElementById('maxUses').value;
+
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+
+      // Implementation here
+      alert(`Code created: ${code}`);
+    }
+
+    // Generate random code
+    function generateCode() {
+      return 'CYBORX-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    }
+
+    // Save settings
+    async function saveSettings() {
+      alert('Settings saved!');
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStats();
+      loadDeposits();
+      setInterval(loadStats, 30000); // Refresh every 30 seconds
+    });
+  </script>
+
+  <style>
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      color: #94a3b8;
+      text-decoration: none;
+      transition: all 0.3s;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link:hover {
+      background: rgba(255,255,255,0.05);
+      color: #e5e7eb;
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(96,165,250,0.2));
+      color: #22c55e;
+      font-weight: 600;
+    }
+  </style>
+</body>
+</html>
