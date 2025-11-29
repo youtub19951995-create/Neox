@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in • MD_CC_CHK</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="icon" href="/assets/branding/md_cc_chk-mark.png">
+<style>
+  :root{ --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,.12); }
+  html,body{height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  body{
+    background:
+      radial-gradient(1100px 700px at 8% -10%, rgba(106,92,255,.20), transparent 60%),
+      radial-gradient(900px 500px at 110% 110%, rgba(0,229,255,.16), transparent 60%),
+      #0a1022;
+    color:#e7eefc;
+  }
+  .glass{backdrop-filter: blur(14px); background: var(--glass); border:1px solid var(--stroke)}
+  .card{box-shadow: 0 25px 70px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.03)}
+</style>
+</head>
+<body class="min-h-full">
+
+  <main class="min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-xl space-y-6">
+
+      <!-- Brand -->
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 rounded-2xl bg-slate-900/60 border border-white/10 grid place-items-center shadow-lg">
+          <img src="/assets/branding/md_cc_chk-mark.png" alt="MD_CC_CHK" class="w-12 h-12 rounded-xl">
+        </div>
+        <h1 class="mt-3 text-3xl font-extrabold tracking-tight">MD_CC_CHK: Secure Sign-in</h1>
+      </div>
+
+      <!-- Error / Notice banners -->
+      
+              <!-- Sign-in Card -->
+        <div class="glass card rounded-3xl p-6">
+          <div class="flex flex-col items-center gap-4">
+            <span class="text-sm text-slate-300">Sign in with Telegram</span>
+
+            <!-- Telegram widget -->
+            <div class="w-full flex justify-center">
+              <script async src="https://telegram.org/js/telegram-widget.js?22"
+                      data-telegram-login="MD_TECH_CC_BOT"
+                      data-size="large"
+                      data-auth-url="/telegram_auth.php"
+                      data-request-access="write"></script>
+            </div>
+
+            
+            <p class="text-[11px] text-slate-500 text-center">
+              Telegram OAuth is secure. We do not get access to your account.
+            </p>
+          </div>
+        </div>
+
+        <!-- Legal + Powered by -->
+        <div class="text-center text-xs text-slate-400">
+          By continuing, you agree to our
+          <a class="text-sky-300 hover:underline" href="/legal/terms">Terms of Service</a> and
+          <a class="text-sky-300 hover:underline" href="/legal/privacy">Privacy Policy</a>.
+        </div>
+        <div class="flex items-center justify-center gap-2 text-xs text-slate-400">
+          <span>Powered by</span>
+          <img src="/assets/branding/blink-badge.png" alt="MD_CC_CHK" class="h-5">
+        </div>
+          </div>
+  </main>
+</body>
+</html>
