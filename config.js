@@ -1,0 +1,102 @@
+// ============================================
+// BOT CONFIGURATION FILE
+// ============================================
+// Edit this file to customize your bot
+
+// ============================================
+// 1. BRANDING & BOT INFO
+// ============================================
+const CONFIG = {
+  BOT_NAME: 'Chkexploit',
+  BOT_DOMAIN: 'cyborx.net',
+  ADMIN_USERNAME: 'cyborx_admin', // Telegram admin username
+  SUPPORT_BOT: '@CyborXSupport_bot', // Support bot username
+};
+
+// ============================================
+// 2. API ENDPOINTS
+// ============================================
+const API_BASE = `https://${CONFIG.BOT_DOMAIN}/api`;
+
+const ENDPOINTS = {
+  // User APIs
+  USER_INFO: `${API_BASE}/me.php`,
+  BUY_PLAN: `${API_BASE}/buyplan.php`,
+  REDEEM_HISTORY: `${API_BASE}/redeemhistory.php`,
+  DEPOSIT_HISTORY: `${API_BASE}/deposithistory.php`,
+
+  // Tool APIs
+  KILLER_API: `${API_BASE}/killer/api.php`,
+  KILLER_API2: `${API_BASE}/killer/api2.php`,
+  CHECKER_API: `${API_BASE}/checker/api.php`,
+  AUTOHIT_API: `${API_BASE}/autohit/api.php`,
+
+  // Settings APIs
+  PROXIES: `${API_BASE}/proxies.php`,
+  UPDATE_PROFILE: `${API_BASE}/updateprofile.php`,
+
+  // Admin APIs
+  ADMIN_STATS: `${API_BASE}/admin/stats.php`,
+  ADMIN_USERS: `${API_BASE}/admin/users.php`,
+  ADMIN_APPROVE_DEPOSIT: `${API_BASE}/admin/approve_deposit.php`,
+};
+
+// ============================================
+// 3. CRYPTO PAYMENT ADDRESSES
+// ============================================
+const CRYPTO_WALLETS = {
+  BINANCE_ID: '753175553',
+  BTC: '1GNgQcMHfAYS3XVmAFhck959vGb3T1B86t',
+  USDT_TRC20: 'TGcizrCAjTvvLCAakd1KojTVWGZEC9eEm9',
+  USDT_BEP20: '0xcd76a1fddfc20c89b223442e9ea655d9ab3b0950',
+  LTC: 'LRgnqqufbX2euvmiyhBU26EaMZVWMicq9A',
+  TRX: 'TGcizrCAjTvvLCAakd1KojTVWGZEC9eEm9', // Usually same as TRC20
+};
+
+// ============================================
+// 4. PRICING & PLANS
+// ============================================
+const PLANS = {
+  FREE: {
+    name: 'Free Plan',
+    price: 0,
+    features: ['Basic access', 'Limited checks'],
+  },
+  PREMIUM: {
+    name: 'Premium',
+    price: 10,
+    features: ['Unlimited checks', 'Priority support', 'All tools'],
+  },
+  VIP: {
+    name: 'VIP',
+    price: 25,
+    features: ['Everything in Premium', 'Custom API', 'Dedicated support'],
+  },
+};
+
+// 1 XCoin = 1 USDT exchange rate
+const XCOIN_TO_USDT = 1;
+
+// ============================================
+// 5. EXTERNAL SERVICES
+// ============================================
+const EXTERNAL_APIS = {
+  COINGECKO: 'https://api.coingecko.com/api/v3/simple/price',
+  // Add other external APIs here
+};
+
+// ============================================
+// 6. UI SETTINGS
+// ============================================
+const UI_SETTINGS = {
+  THEME: 'dark',
+  PRIMARY_COLOR: '#22c55e',
+  SECONDARY_COLOR: '#60a5fa',
+  BACKGROUND: '#0b1220',
+  CARD_BG: '#0f172a',
+};
+
+// Export for use in other files
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CONFIG, ENDPOINTS, CRYPTO_WALLETS, PLANS, EXTERNAL_APIS, UI_SETTINGS };
+}

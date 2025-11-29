@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CyborX</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; }
+    body { overflow: hidden; }
+
+    .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.04); }
+    .card  { border-radius: 1rem; padding: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.08); }
+
+    .mainGrid { height: 100vh; }
+    .scrollCenter { height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Hide scrollbars globally but keep scrolling */
+    .no-scrollbar { overflow-y: auto; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; background: transparent !important; }
+    .no-scrollbar::-webkit-scrollbar-thumb { background: transparent !important; }
+
+    /* Right panel / modal lists explicit */
+    #rightTopList, #rightOnlineList, #topModalList, #onlineModalList {
+      overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;
+    }
+    #rightTopList::-webkit-scrollbar,
+    #rightOnlineList::-webkit-scrollbar,
+    #topModalList::-webkit-scrollbar,
+    #onlineModalList::-webkit-scrollbar { width:0!important; height:0!important; background:transparent!important; display:none!important; }
+
+    /* Outer cards never show their own scrollbar */
+    #cardTopUsers, #cardOnlineUsers {
+      overflow: hidden; -ms-overflow-style:none; scrollbar-width:none;
+    }
+    #cardTopUsers::-webkit-scrollbar, #cardOnlineUsers::-webkit-scrollbar { width:0!important;height:0!important;display:none!important;background:transparent!important; }
+
+    /* Mobile dock (fixed bottom) */
+    .mobile-dock {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(15, 23, 42, .82);
+      backdrop-filter: blur(18px) saturate(140%);
+      border-top: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 -8px 24px rgba(0,0,0,.35);
+    }
+    .dock-btn { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px; border-radius: 14px; color: #cbd5e1; }
+    .dock-btn:hover { background: rgba(255,255,255,.06); }
+    .dock-icon { width: 22px; height: 22px; opacity: .95; }
+
+    /* Pro user tile (gradient border) */
+    .user-tile {
+      position: relative; border-radius: 12px; padding: 10px;
+      background: linear-gradient(#0b1220, #0b1220) padding-box,
+                  linear-gradient(135deg, #6d28d9, #06b6d4) border-box;
+      border: 1px solid transparent;
+    }
+
+    /* Mobile slide menu */
+    #mSide { transform: translateX(-100%); transition: transform .28s ease; }
+    #mSide.open { transform: translateX(0%); }
+    #mOverlay { opacity: 0; transition: opacity .2s ease; }
+    #mOverlay.show { opacity: .55; }
+
+    /* --- Global Statistics styles --- */
+    .gs-panel{
+      border-radius:16px; padding:16px 16px 18px;
+      background: radial-gradient(1200px 600px at -20% -40%, rgba(59,130,246,.10), transparent 60%),
+                  radial-gradient(1200px 600px at 120% -40%, rgba(16,185,129,.10), transparent 60%),
+                  rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 12px 24px rgba(0,0,0,.25);
+    }
+    .gs-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .gs-chip{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
+    .gs-title{font-weight:600;color:#e5e7eb}
+    .gs-sub{font-size:12px;color:#9aa4b2;margin-top:2px}
+    .gs-grid{display:grid;gap:16px}
+    @media (min-width:640px){.gs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (min-width:1280px){.gs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+    .gs-card{
+      position:relative;border-radius:14px;padding:18px 16px;
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: 0 10px 20px rgba(0,0,0,.24);
+      color:#e6e9ee;
+    }
+    .gs-card .gs-icon{
+      width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      margin-bottom:10px;border:1px solid rgba(255,255,255,.18)
+    }
+    .gs-card .gs-icon svg{width:18px;height:18px;display:block;opacity:.95}
+    .gs-num{font-weight:800;font-size:28px;line-height:1}
+    .gs-label{font-size:12px;color:#cbd5e1;margin-top:6px}
+    .gs-blue   { background:linear-gradient(135deg, rgba(30,58,138,.7), rgba(30,41,59,.65)); }
+    .gs-green  { background:linear-gradient(135deg, rgba(6,95,70,.75), rgba(15,118,110,.65)); }
+    .gs-red    { background:linear-gradient(135deg, rgba(88,28,28,.78), rgba(124,45,18,.65)); }
+    .gs-purple { background:linear-gradient(135deg, rgba(76,29,149,.75), rgba(88,28,135,.65)); }
+    
+    /* ===== HARD GLOBAL SCROLLBAR HIDE (Chrome/Edge/Firefox/IE compatible) ===== */
+    html, body, .scrollCenter,
+    #rightTopList, #rightOnlineList, #topModalList, #onlineModalList,
+    aside, .no-scrollbar {
+      -ms-overflow-style: none;   /* IE/Edge */
+      scrollbar-width: none;      /* Firefox */
+    }
+    
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    .scrollCenter::-webkit-scrollbar,
+    #rightTopList::-webkit-scrollbar,
+    #rightOnlineList::-webkit-scrollbar,
+    #topModalList::-webkit-scrollbar,
+    #onlineModalList::-webkit-scrollbar,
+    aside::-webkit-scrollbar,
+    .no-scrollbar::-webkit-scrollbar{
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+      background: transparent !important;
+    }
+    
+    .no-scrollbar { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    /* ===== END ===== */
+    
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+
+<!-- MOBILE DOCK -->
+<nav class="mobile-dock lg:hidden">
+  <div class="flex items-center gap-2">
+    <button id="dockMenu" class="dock-btn" aria-label="Menu">
+      <svg class="dock-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18v2H3zM3 11h18v2H3zM3 16h18v2H3z"/></svg>
+    </button>
+    <button id="dockTop" class="dock-btn" aria-label="Top Users">
+      <svg class="dock-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6 6 .9-4.5 4.2 1.1 6.1L12 16.8 6.4 19.2 7.5 13.1 3 8.9l6-.9z"/></svg>
+    </button>
+    <button id="dockOnline" class="dock-btn" aria-label="Online Users">
+      <svg class="dock-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12c2.21 0 4-1.79 4-4S11.21 4 9 4 5 5.79 5 8s1.79 4 4 4zm8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM9 14c-2.67 0-8 1.34-8 4v2h10.09A7 7 0 009 14zm8 0c-1.3 0-2.53.2-3.6.56A6.97 6.97 0 0119 20h5v-2c0-2.66-5.33-4-8-4z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE OVERLAY (for sidebar) -->
+<div id="mOverlay" class="fixed inset-0 bg-black hidden z-40"></div>
+
+<div class="mainGrid grid grid-cols-1 lg:grid-cols-[260px_1fr_360px]">
+
+  <!-- LEFT sidebar (desktop) -->
+  <aside class="hidden lg:flex flex-col border-r border-white/10 bg-slate-900/60 sticky top-0 h-screen">
+        <a href="/app/settings" class="p-4 flex items-center gap-3 hover:bg-white/5 transition">
+      <img src="https://t.me/i/userpic/320/v5J5eqA-nM7jAMBoAxTNpZKHZJXIjnY3BP82fW4Mi6aXtHKZGrFVhFmyYaT5mkkK.jpg" class="w-10 h-10 rounded-xl object-cover" alt=""
+           onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/identicon/svg?seed=MD_TECH_HACKER'">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <div class="font-semibold truncate max-w-[130px]">『⛥ 𝗠𝗗 𝗧𝗘𝗖𝗛 𝗛𝗔𝗖𝗞𝗘𝗥 ⛥』</div>
+          <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>        </div>
+        <div class="text-xs text-slate-400 truncate">@MD_TECH_HACKER</div>
+      </div>
+      <span class="text-[11px] px-2 py-1 rounded-md bg-white/10 text-slate-300">View</span>
+    </a>
+
+    <nav class="px-2 text-sm space-y-1">
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 bg-white/5" href="/app/dashboard"><svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9H6v-9H3l9-8z"/></svg><span>Dashboard</span></a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-amber-500/10 text-amber-300 " href="/app/deposit"><svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 4 5-8 5 8 4-4v10H3V7z"/></svg><span class="font-medium">Deposit XCoin</span></a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-amber-500/10 text-amber-300 " href="/app/buy"><svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 4 5-8 5 8 4-4v10H3V7z"/></svg><span class="font-medium">Buy Premium</span></a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/redeem"><svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6H4a2 2 0 00-2 2v3h20V8a2 2 0 00-2-2zM2 21a2 2 0 002 2h16a2 2 0 002-2v-8H2v8z"/></svg><span>Redeem</span></a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/checkers"><svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg><span>Checkers</span></a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/autohitters"><svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg><span>Auto Hitters</span></a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/killers"><svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="currentColor"><path d="M14.7 6.3l3 3L9 18H6v-3l8.7-8.7zM17 2l5 5-2 2-5-5 2-2z"/></svg><span>CC Killer</span></a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/settings"><svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94a8 8 0 000-1.88l2.03-1.58-1.92-3.32-2.39.96a8.06 8.06 0 00-1.63-.94L14.5 2h-5l-.7 2.18c-.57.23-1.12.53-1.63.94l-2.39-.96L2.86 7.5l2.03 1.58a8.6 8.6 0 000 1.84L2.86 12.5l1.92 3.32 2.39-.96c.5.4 1.05.71 1.63.94L9.5 22h5l.7-2.18c.57-.23 1.12-.53 1.63-.94l2.39.96 1.92-3.32-2.03-1.58z"/></svg><span>Settings</span></a>
+          </nav>
+
+    <div class="mt-auto p-4">
+      <a href="/logout.php" class="w-full inline-flex items-center justify-center rounded-xl bg-rose-500/15 text-rose-300 px-3 py-2 hover:bg-rose-500/20">
+        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zM20 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- MOBILE SIDEBAR (all pages) -->
+  <aside id="mSide" class="lg:hidden fixed inset-y-0 left-0 w-72 z-50 bg-slate-900/95 border-r border-white/10 p-4 no-scrollbar">
+    <a href="/app/settings" class="flex items-center gap-3 mb-4">
+      <img src="https://t.me/i/userpic/320/v5J5eqA-nM7jAMBoAxTNpZKHZJXIjnY3BP82fW4Mi6aXtHKZGrFVhFmyYaT5mkkK.jpg" class="w-9 h-9 rounded-lg object-cover" alt=""
+           onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/identicon/svg?seed=MD_TECH_HACKER'">
+      <div class="min-w-0">
+        <div class="font-semibold truncate max-w-[130px]">『⛥ 𝗠𝗗 𝗧𝗘𝗖𝗛 𝗛𝗔𝗖𝗞𝗘𝗥 ⛥』</div>
+        <div class="text-xs text-slate-400 truncate">@MD_TECH_HACKER</div>
+      </div>
+      <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>    </a>
+    <nav class="px-1 text-sm space-y-1">
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 bg-white/5" href="/app/dashboard">Dashboard</a>
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/deposit">Deposit XCoin</a>
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/buy">Buy Premium</a>
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/redeem">Redeem</a>
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/checkers">Checkers</a>
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/autohitters">Auto Hitters</a>
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/killers">CC Killers</a>
+      <a class="block px-3 py-2 rounded-xl hover:bg-white/5 " href="/app/settings">Settings</a>
+            <div class="pt-6">
+        <a href="/logout.php" class="w-full inline-flex items-center justify-center rounded-xl bg-rose-500/15 text-rose-300 px-3 py-2 hover:bg-rose-500/20">Logout</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- CENTER -->
+  <main class="scrollCenter">
+    <!-- Header (fixed) -->
+    <header class="sticky top-0 z-10 bg-slate-950/80 backdrop-blur border-b border-white/10">
+      <div class="px-4 lg:px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-500 to-emerald-400 flex items-center justify-center shadow">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM7.5 12l2.5 2.5L16.5 8l1.5 1.5-8 8L6 13.5 7.5 12z"/></svg>
+          </div>
+          <div class="font-semibold">CyborX</div>
+        </div>
+
+        <!-- live clock (kept) -->
+        <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs text-slate-200 font-mono">
+          <svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-12h-1v5l4 2 .5-.9-3.5-1.8V8z"/></svg>
+          <span id="liveClock">--:--:--</span>
+        </div>
+      </div>
+
+          </header>
+
+    <!-- CENTER CONTENT -->
+    <section class="p-4 lg:p-6 space-y-6 pb-28 lg:pb-6">
+      <!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Card Killer • CyborX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<style>
+  :root{ --bg:#0b1220; --card:#0f172a; --border:rgba(255,255,255,.10); --muted:#94a3b8; --text:#e5e7eb; --accent1:#22c55e; --accent2:#60a5fa; }
+  html,body{height:100%;margin:0;overflow-x:hidden}
+  body{font-family:'Inter',sans-serif;color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(16,185,129,.12), transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, rgba(59,130,246,.12), transparent 60%),
+      linear-gradient(180deg,#0a0f1f 0%,#0b1220 100%);
+  }
+  main::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px);
+    background-size:40px 40px; mask-image: radial-gradient(800px 400px at 50% 0%, rgba(255,255,255,.4), transparent 70%);
+  }
+  .glass{position:relative;border-radius:18px;background:linear-gradient(180deg, rgba(17,24,39,.55), rgba(15,23,42,.55));border:1px solid var(--border);overflow:hidden}
+  .card-shadow{box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .section-title{font-family:"Space Grotesk",sans-serif;letter-spacing:.2px;background:linear-gradient(90deg,#e5e7eb 0%,#8abef8 60%,#34d399 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .btn-primary{background:linear-gradient(90deg,var(--accent1) 0%,var(--accent2) 100%);color:#05131b;font-weight:700}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-muted{background:#111827;border:1px solid var(--border);color:#e5e7eb}
+  .btn-muted:hover{background:#1f2937}
+  .input-like{appearance:none;border:1px solid var(--border);background:#0b1730;color:var(--text);border-radius:12px;padding:.9rem 1rem;font-size:1rem;outline:none}
+  .input-like:focus{border-color:rgba(16,185,129,.6);box-shadow:0 0 0 4px rgba(16,185,129,.12)}
+  .pill{display:inline-flex;align-items:center;gap:.5rem;background:#0b1730;border:1px solid var(--border);border-radius:9999px;padding:.45rem .7rem;font-size:.85rem}
+  .progress-wrap{height:14px;border-radius:10px;background:#0e1730;border:1px solid rgba(255,255,255,.10);overflow:hidden}
+  .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#60a5fa)}
+  .status-big{font-family:"Space Grotesk",sans-serif;font-size:1.6rem;line-height:1.25;margin:0}
+  .status-ok{color:#34d399}
+  .status-bad{color:#f87171}
+  /* Config modal styles (sheet + list) */
+  .sheet{width:100%;max-width:720px}
+  .stepper{display:flex;gap:.5rem;margin-bottom:1rem}
+  .step{flex:1;text-align:center;font-size:.85rem;padding:.55rem .4rem;border-radius:.6rem;border:1px solid rgba(255,255,255,.10);background:#0e1730;color:#cbd5e1}
+  .step.on{background:linear-gradient(90deg,#22c55e33,#60a5fa33);border-color:rgba(16,185,129,.35);color:#e5e7eb;font-weight:600}
+  .fsel-list{display:grid;gap:.5rem}
+  .fsel-item{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;border-radius:12px;background:#0d152b;border:1px solid rgba(255,255,255,.10);transition:transform .12s ease,border-color .12s ease,background .12s ease}
+  .fsel-item:hover{transform:translateY(-1px);border-color:rgba(34,197,94,.35);background:#0f1936}
+  .fsel-left{display:flex;gap:.8rem;align-items:center}
+  .fsel-ico{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:rgba(148,163,184,.12);font-size:16px}
+  .fsel-title{font-weight:600}
+  .fsel-sub{font-size:.82rem;color:#9fb3c8;margin-top:.1rem}
+  .badge-s{font-size:.70rem;padding:.12rem .4rem;border-radius:.4rem;border:1px solid rgba(255,255,255,.12)}
+  .badge-ok{color:#22c55e;background:rgba(34,197,94,.12)}
+  .badge-down{color:#f87171;background:rgba(248,113,113,.12)}
+  .fsel-item.active{outline:2px solid rgba(34,197,94,.35)}
+</style>
+</head>
+<body>
+<main class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Header -->
+  <div class="mb-6 grid sm:grid-cols-3 gap-4">
+    <div class="sm:col-span-2 flex items-center gap-3">
+      <div class="p-[2px] rounded-full" style="background:linear-gradient(135deg, rgba(16,185,129,.6), rgba(59,130,246,.6));">
+        <img src="https://t.me/i/userpic/320/v5J5eqA-nM7jAMBoAxTNpZKHZJXIjnY3BP82fW4Mi6aXtHKZGrFVhFmyYaT5mkkK.jpg" class="w-12 h-12 rounded-full border border-white/20 object-cover" alt="">
+      </div>
+      <div class="min-w-0">
+        <div class="font-semibold truncate">『⛥ 𝗠𝗗 𝗧𝗘𝗖𝗛 𝗛𝗔𝗖𝗞𝗘𝗥 ⛥』</div>
+        <div class="text-xs text-slate-400">@MD_TECH_HACKER • Free</div>
+      </div>
+    </div>
+    <!-- Kcoin card (Configure button removed from here) -->
+    <div class="glass card-shadow px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 grid place-items-center rounded-xl" style="background:linear-gradient(135deg,#22c55e22,#60a5fa22);border:1px solid rgba(255,255,255,.08)"><i class="fa-solid fa-coins text-yellow-300"></i></div>
+        <div>
+          <div class="text-xs text-slate-400">Kcoin Balance</div>
+          <div class="font-semibold text-lg"><span id="kcoin">0</span></div>
+        </div>
+      </div>
+      <a href="/app/buy" class="btn-primary rounded-lg px-3 py-2 text-sm whitespace-nowrap"><i class="fa-solid fa-wallet mr-1"></i> Top up Kcoin</a>
+    </div>
+  </div>
+  <!-- Killer -->
+  <section class="glass card-shadow p-6">
+    <!-- Title row: responsive (wraps on small screens) -->
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-3 flex-wrap">
+        <h2 class="text-2xl section-title">Card Killer</h2>
+        <span id="pillApi" class="pill"><i class="fa-solid fa-plug-circle-bolt text-emerald-400"></i> API: <b id="apiName" class="ml-1">—</b></span>
+      </div>
+      <button id="openCfgBtn" class="btn-muted rounded-lg px-3 py-2 text-sm shrink-0">
+        <i class="fa-solid fa-sliders mr-1"></i> Configure
+      </button>
+    </div>
+    <!-- Input row -->
+    <div class="mt-5 grid md:grid-cols-[1fr_auto] gap-3">
+      <input id="cc" class="input-like font-mono w-full" placeholder="cc|mm|yyyy|cvv (e.g. 491611******1234|12|2027|123)">
+      <div class="flex gap-2 justify-stretch sm:justify-end">
+        <button id="eliminate" class="btn-primary rounded-lg px-5 py-3 text-sm w-full sm:w-auto"><i class="fa-solid fa-jet-fighter-up mr-1"></i> Eliminate</button>
+        <button id="clear" class="btn-muted rounded-lg px-4 py-3 text-sm w-full sm:w-auto"><i class="fa-solid fa-eraser mr-1"></i> Clear</button>
+      </div>
+    </div>
+    <!-- Progress -->
+    <div id="pwrap" class="mt-5 hidden">
+      <div class="progress-wrap"><div id="pbar" class="progress-bar"></div></div>
+      <div class="mt-2 text-xs text-slate-300 flex items-center gap-2">
+        <span id="ppct" class="font-semibold">0%</span>
+        <span id="pmsg" class="text-slate-400">Initializing…</span>
+      </div>
+    </div>
+    <!-- Panels -->
+    <div class="mt-6 grid md:grid-cols-2 gap-4">
+      <div class="glass p-4 border border-white/10">
+        <div class="text-sm text-slate-300 mb-2 font-semibold">BIN Info</div>
+        <ul class="text-sm text-slate-300 space-y-1">
+          <li><span class="text-slate-400">Brand:</span> <span id="binBrand">—</span></li>
+          <li><span class="text-slate-400">Issuer:</span> <span id="binIssuer">—</span></li>
+          <li><span class="text-slate-400">Country:</span> <span id="binCountry">—</span></li>
+        </ul>
+      </div>
+      <div class="glass p-4 border border-white/10 flex items-center">
+        <p id="final" class="status-big text-slate-200">—</p>
+      </div>
+    </div>
+  </section>
+</main>
+<!-- Credits Modal -->
+<div id="creditsModal" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"></div>
+  <div class="relative min-h-full flex items-end sm:items-center justify-center p-4">
+    <div id="creditsCard" class="w-full max-w-md translate-y-4 sm:translate-y-0 opacity-0 transition-all duration-200">
+      <div class="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl">
+        <div class="px-5 py-4 border-b border-white/10">
+          <h3 class="text-lg font-semibold">Credits System</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Please review how credits are used across gates. No credits deduction for Dead Cards ⚠️</p>
+        </div>
+        <div class="px-5 py-4 space-y-4 text-sm text-slate-300">
+          <div>
+            <div class="text-slate-200 font-medium mb-1">Auth Gates</div>
+            <ul class="space-y-1">
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Approved = <span class="font-semibold"> - 3 credits</span></li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Live = <span class="font-semibold"> - 1 credits</span></li>
+            </ul>
+          </div>
+          <div class="border-t border-white/10 pt-3">
+            <div class="text-slate-200 font-medium mb-1">Charge Gates</div>
+            <ul class="space-y-1">
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-fuchsia-400"></span> Charge = <span class="font-semibold"> - 5 credits</span></li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Live = <span class="font-semibold"> - 3 credits</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="px-5 pb-5">
+          <button id="ackBtn"
+            class="w-full rounded-xl px-4 py-2.5 font-semibold text-slate-900"
+            style="background: linear-gradient(90deg,#34d399,#67e8f9)">
+            I acknowledge
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Configuration Modal (API + Proxy) -->
+<div id="cfgModal" class="fixed inset-0 z-[120] hidden">
+  <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"></div>
+  <div class="relative min-h-full flex items-end sm:items-center justify-center p-4">
+    <div class="sheet translate-y-4 opacity-0 transition-all duration-200">
+      <div class="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl p-5">
+        <div class="stepper">
+          <div id="s1" class="step on">1. API</div>
+          <div id="s2" class="step">2. Proxy</div>
+        </div>
+        <div id="step1">
+          <div class="text-sm text-slate-300 mb-2">Select a test API</div>
+          <div id="apiList" class="fsel-list"></div>
+        </div>
+        <div id="step2" class="hidden">
+          <div class="rounded-xl border border-white/10 p-4">
+            <div class="text-sm font-semibold mb-2">Proxy Settings</div>
+            <div class="flex items-center gap-3 mb-2">
+              <label class="inline-flex items-center cursor-pointer">
+                <input id="cfgProxySwitch" type="checkbox" class="peer sr-only">
+                <span class="w-11 h-6 bg-slate-700 rounded-full relative
+                             after:content-[''] after:absolute after:top-0.5 after:left-0.5
+                             after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all
+                             duration-300 peer-checked:bg-emerald-500 peer-checked:after:left-[1.5rem]"></span>
+              </label>
+              <span class="text-sm text-slate-200">Use proxy</span>
+            </div>
+            <div id="cfgProxySelectWrap" class="hidden">
+              <label class="block text-xs text-slate-300 mb-1">Select Proxy</label>
+              <select id="cfgProxySelect" class="w-full px-3 py-2 text-sm" style="background:#0b1730;color:#e5e7eb;border:1px solid rgba(255,255,255,.12)">
+                <option value="random">Random</option>
+                              </select>
+                              <div class="mt-2 text-xs text-amber-300">No saved proxies found. Add one in Settings.</div>
+                          </div>
+          </div>
+        </div>
+        <div class="mt-5 flex items-center justify-between">
+          <button id="cfgCancel" class="px-4 py-2 rounded-lg btn-muted text-sm">Cancel</button>
+          <div class="flex gap-2">
+            <button id="cfgBack" class="px-4 py-2 rounded-lg btn-muted text-sm hidden">Back</button>
+            <button id="cfgNext" class="px-4 py-2 rounded-lg btn-primary text-sm">Next</button>
+            <button id="cfgSave" class="px-4 py-2 rounded-lg btn-primary text-sm hidden">Save & Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const toast = (t, icon='info') => Swal.fire({toast: true, position: 'top-end', timer: 2400, showConfirmButton: false, icon, title: t, background: 'rgba(2,6,23,.95)', color: '#fff', iconColor: '#34d399'});
+/* API registry (endpoint hidden from UI) */
+const API_OPTIONS = [
+  { id: 'api1', label: 'Test API v1', endpoint: 'https://cyborx.net/api/killer/api.php', alive: true }, // Updated to absolute URL
+  { id: 'api2', label: 'Test API v2', endpoint: 'https://cyborx.net/api/killer/api2.php', alive: false },
+  { id: 'api3', label: 'Test API v3', endpoint: 'https://cyborx.net/api/killer/api3.php', alive: false },
+];
+const LS_CFG_KEY = 'cx_killer_cfg_v1';
+const ACK_KEY = 'cx_ack_killer_credits_v1';
+/* Progress stages */
+const PROGRESS_STAGES = [
+  { percent: 0, text: "Deploying Elimination Core..." },
+  { percent: 20, text: "Analyzing Target (Attempt 1)..." },
+  { percent: 40, text: "Breaking Encryption (Attempt 2)..." },
+  { percent: 60, text: "Disrupting Security (Attempt 3)..." },
+  { percent: 80, text: "Launching Termination (Attempt 4)..." },
+  { percent: 100, text: "Finalizing Results (Attempt 5)..." }
+];
+const pwrap = $('#pwrap'), pbar = $('#pbar'), ppct = $('#ppct'), pmsg = $('#pmsg');
+function setStage(i) { const s = PROGRESS_STAGES[Math.max(0, Math.min(i, PROGRESS_STAGES.length - 1))]; pbar.style.width = s.percent + '%'; ppct.textContent = s.percent + '%'; pmsg.textContent = s.text; }
+function showProgress(on) { pwrap.classList.toggle('hidden', !on); if (on) setStage(0); }
+/* State */
+let SELECTED_API = API_OPTIONS.find(a => a.alive) || API_OPTIONS[0];
+let CFG = { apiId: SELECTED_API?.id || 'api1', useProxy: false, proxyVal: 'random' };
+function applyApiPill() {
+  $('#apiName').textContent = (API_OPTIONS.find(a => a.id === CFG.apiId)?.label || '—');
+  const pill = $('#pillApi');
+  const alive = (API_OPTIONS.find(a => a.id === CFG.apiId)?.alive);
+  pill.style.background = alive ? 'rgba(34,197,94,.12)' : 'rgba(248,113,113,.12)';
+  pill.style.borderColor = 'rgba(255,255,255,.12)';
+}
+function loadCfg() { try { const raw = localStorage.getItem(LS_CFG_KEY); if (raw) CFG = Object.assign(CFG, JSON.parse(raw)); } catch {} SELECTED_API = API_OPTIONS.find(a => a.id === CFG.apiId) || SELECTED_API; applyApiPill(); }
+function saveCfg() { try { localStorage.setItem(LS_CFG_KEY, JSON.stringify(CFG)); } catch {} }
+loadCfg();
+/* Credits modal (first time) */
+const creditsModal = $('#creditsModal'), creditsCard = $('#creditsCard');
+function openCredits() { creditsModal.classList.remove('hidden'); requestAnimationFrame(() => { creditsCard.classList.remove('translate-y-4', 'opacity-0'); creditsCard.classList.add('translate-y-0', 'opacity-100'); }); }
+function closeCredits() { creditsCard.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => creditsModal.classList.add('hidden'), 180); }
+if (!localStorage.getItem(ACK_KEY)) openCredits();
+$('#ackBtn')?.addEventListener('click', () => { localStorage.setItem(ACK_KEY, String(Date.now())); closeCredits(); });
+/* Config modal */
+const cfgModal = $('#cfgModal'), cfgSheet = cfgModal?.querySelector('.sheet');
+const btnOpenCfg = $('#openCfgBtn'), btnCfgCancel = $('#cfgCancel'), btnCfgNext = $('#cfgNext'), btnCfgBack = $('#cfgBack'), btnCfgSave = $('#cfgSave');
+const step1 = $('#step1'), step2 = $('#step2'), s1 = $('#s1'), s2 = $('#s2');
+const cfgProxySwitch = $('#cfgProxySwitch'), cfgProxyWrap = $('#cfgProxySelectWrap'), cfgProxySelect = $('#cfgProxySelect');
+let STEP = 1;
+function stepUI() { step1.classList.toggle('hidden', STEP !== 1); step2.classList.toggle('hidden', STEP !== 2); s1.classList.toggle('on', STEP === 1); s2.classList.toggle('on', STEP === 2); btnCfgBack.classList.toggle('hidden', STEP === 1); btnCfgNext.classList.toggle('hidden', STEP === 2); btnCfgSave.classList.toggle('hidden', STEP !== 2); }
+function buildApiList() {
+  const box = $('#apiList'); box.innerHTML = '';
+  API_OPTIONS.forEach(a => {
+    const li = document.createElement('div');
+    li.className = 'fsel-item' + (CFG.apiId === a.id ? ' active' : ''); li.style.opacity = a.alive ? '1' : '.55';
+    li.innerHTML = `
+      <div class="fsel-left">
+        <div class="fsel-ico">🔌</div>
+        <div><div class="fsel-title">${a.label}</div><div class="fsel-sub">${a.alive ? 'Active' : 'Inactive'}</div></div>
+      </div>
+      <div class="fsel-right"><span class="badge-s ${a.alive ? 'badge-ok' : 'badge-down'}">${a.alive ? 'Active' : 'Inactive'}</span></div>`;
+    if (a.alive) { li.addEventListener('click', () => { CFG.apiId = a.id; buildApiList(); }); }
+    box.appendChild(li);
+  });
+}
+function openCfg() { STEP = 1; stepUI(); buildApiList(); cfgProxySwitch.checked = !!CFG.useProxy; cfgProxyWrap.classList.toggle('hidden', !cfgProxySwitch.checked); if (cfgProxySelect) cfgProxySelect.value = CFG.proxyVal || 'random'; cfgModal.classList.remove('hidden'); requestAnimationFrame(() => { cfgSheet.classList.remove('translate-y-4', 'opacity-0'); cfgSheet.classList.add('translate-y-0', 'opacity-100'); }); }
+function closeCfg() { cfgSheet.classList.add('translate-y-4', 'opacity-0'); setTimeout(() => cfgModal.classList.add('hidden'), 180); }
+btnOpenCfg?.addEventListener('click', openCfg);
+btnCfgCancel?.addEventListener('click', closeCfg);
+btnCfgNext?.addEventListener('click', () => { if (STEP === 1 && !CFG.apiId) return toast('Select an API', 'warning'); STEP = 2; stepUI(); });
+btnCfgBack?.addEventListener('click', () => { STEP = 1; stepUI(); });
+cfgProxySwitch?.addEventListener('change', () => { cfgProxyWrap.classList.toggle('hidden', !cfgProxySwitch.checked); });
+btnCfgSave?.addEventListener('click', () => {
+  CFG.useProxy = !!cfgProxySwitch.checked;
+  CFG.proxyVal = cfgProxySelect?.value || 'random';
+  SELECTED_API = API_OPTIONS.find(a => a.id === CFG.apiId) || SELECTED_API;
+  applyApiPill(); saveCfg(); closeCfg(); toast('Configuration saved', 'success');
+});
+/* Five parallel fetches */
+async function raceFive(ccLine, onBump) {
+  const total = 5;
+  const ALL_PROXIES = [];
+
+  function buildUrl(index) {
+    const base = SELECTED_API?.endpoint || 'https://cyborx.net/api/killer/api.php'; // Fallback to absolute URL
+    const u = new URL(base, window.location.origin);
+    u.searchParams.set('cc', ccLine);
+    u.searchParams.set('r', Math.random().toString(36).slice(2) + '-' + index); // Unique per request
+    if (CFG.useProxy && CFG.proxyVal) {
+      u.searchParams.set('useProxy', '1');
+      try {
+        let sel;
+        if (CFG.proxyVal === 'random' && ALL_PROXIES.length > 0) {
+          sel = ALL_PROXIES[Math.floor(Math.random() * ALL_PROXIES.length)];
+        } else {
+          sel = JSON.parse(CFG.proxyVal);
+        }
+        if (sel) {
+          u.searchParams.set('host', sel.host || '');
+          u.searchParams.set('port', sel.port || '');
+          u.searchParams.set('user', sel.username || '');
+          u.searchParams.set('pass', sel.password || '');
+          if (sel.ptype) u.searchParams.set('pt', sel.ptype);
+          console.log('Request ' + index + ' using proxy:', sel.host + ':' + sel.port);
+        } else {
+          console.log('Request ' + index + ' no valid proxy selected');
+        }
+      } catch (e) {
+        console.error('Proxy parse error for request ' + index + ':', e);
+      }
+    }
+    console.log('Request ' + index + ' URL:', u.toString());
+    return u.toString();
+  }
+
+  const requests = Array.from({length: total}, (_, index) => {
+    return fetch(buildUrl(index), { cache: 'no-store', keepalive: true }) // Use keepalive for faster responses
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' for request ' + index);
+        return r.json();
+      })
+      .then(data => ({
+        index,
+        success: true,
+        data
+      }))
+      .catch(err => ({
+        index,
+        success: false,
+        error: err.message
+      }));
+  });
+
+  const results = await Promise.all(requests);
+  let completed = 0;
+  results.forEach(result => {
+    completed++;
+    if (typeof onBump === 'function') onBump(completed);
+    console.log('Request ' + result.index + ' completed:', result.success ? 'Success' : 'Failure (' + (result.error || 'Unknown') + ')');
+  });
+
+  return results;
+}
+/* Actions */
+$('#clear').addEventListener('click', () => {
+  $('#cc').value = ''; $('#final').textContent = '—';
+  $('#binBrand').textContent = '—'; $('#binIssuer').textContent = '—'; $('#binCountry').textContent = '—';
+});
+$('#eliminate').addEventListener('click', async () => {
+  const raw = ($('#cc').value || '').trim();
+  const re = /^(\d{13,19})[|/](0?[1-9]|1[0-2])[|/](\d{2,4})[|/](\d{3,4})$/;
+  const m = raw.match(re);
+  if (!m) { toast('Format: cc|mm|yyyy|cvv', 'error'); return; }
+  if (!SELECTED_API || !SELECTED_API.alive) { toast('Please set an Active API', 'warning'); return; }
+  showProgress(true); setStage(0);
+  const t0 = performance.now();
+  try {
+    const results = await raceFive(raw, (completed) => {
+      // Update progress for each completed request
+      const stageIndex = Math.min(completed - 1, PROGRESS_STAGES.length - 1);
+      setStage(stageIndex);
+      if (completed === 5) {
+        setStage(PROGRESS_STAGES.length - 1); // Final stage after all requests
+      }
+    });
+    const secs = Math.max(1, Math.round((performance.now() - t0) / 1000));
+    let kcoin = parseInt($('#kcoin').textContent) || 0;
+    let validCount = 0;
+    let binInfo = { brand: '—', issuer: '—', country: '—' };
+
+    // Aggregate results and count valid responses
+    results.forEach(result => {
+      if (result.success) {
+        if (typeof result.data.kcoin === 'number' && result.data.kcoin < kcoin) {
+          kcoin = result.data.kcoin; // Update kcoin from the first deduction
+        }
+        if (String(result.data.status || '').toLowerCase() === 'valid') {
+          validCount++;
+          // Update BIN info from the first valid response
+          if (!binInfo.brand || binInfo.brand === '—') {
+            binInfo.brand = result.data.brand || 'UNKNOWN';
+            binInfo.issuer = result.data.issuer || 'Unknown';
+            binInfo.country = result.data.country_info || 'Unknown';
+          }
+        }
+      }
+    });
+
+    // Update kcoin
+    $('#kcoin').textContent = String(kcoin);
+
+    // Determine final status based on majority (3 or more valid)
+    const ok = validCount >= 3;
+    $('#final').classList.toggle('status-ok', ok);
+    $('#final').classList.toggle('status-bad', !ok);
+    $('#final').textContent = ok
+      ? `Card Eliminated ✅ - ${secs} seconds (Valid: ${validCount}/5)`
+      : `Elimination Failed ❌ - ${secs} seconds (Valid: ${validCount}/5)`;
+
+    // Update BIN info
+    $('#binBrand').textContent = binInfo.brand;
+    $('#binIssuer').textContent = binInfo.issuer;
+    $('#binCountry').textContent = binInfo.country;
+  } catch (e) {
+    setStage(PROGRESS_STAGES.length - 1);
+    $('#final').classList.remove('status-ok');
+    $('#final').classList.add('status-bad');
+    $('#final').textContent = 'Elimination Failed ❌';
+    $('#binBrand').textContent = '—';
+    $('#binIssuer').textContent = '—';
+    $('#binCountry').textContent = '—';
+    console.error('Error in raceFive:', e);
+  } finally {
+    setTimeout(() => showProgress(false), 450);
+  }
+});
+</script>
+</body>
+</html>    </section>
+  </main>
+
+  <!-- RIGHT column -->
+  <aside class="hidden xl:flex flex-col border-l border-white/10 bg-slate-900/60 sticky top-0 h-screen p-4 space-y-6 overflow-x-hidden">
+    <!-- Online Users -->
+    <div id="cardOnlineUsers" class="rounded-2xl bg-white/5 p-4 h-[45%]">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-slate-300 text-sm">Online Users</div>
+        <div class="text-xs rounded-lg px-2 py-0.5 bg-emerald-500/15 text-emerald-300">
+          Online Now: <span id="rightOnlineNow">20</span>
+        </div>
+      </div>
+      <div id="rightOnlineList" class="no-scrollbar h-[calc(100%_-_1.75rem)] space-y-2 pr-1">
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/v5J5eqA-nM7jAMBoAxTNpZKHZJXIjnY3BP82fW4Mi6aXtHKZGrFVhFmyYaT5mkkK.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=MD_TECH_HACKER'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">『⛥ 𝗠𝗗 𝗧𝗘𝗖𝗛 𝗛𝗔𝗖𝗞𝗘𝗥 ⛥』</div>
+              <div class="text-xs text-slate-400 truncate">@MD_TECH_HACKER</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/bW1P_xLewnvWaVk7p3feKc1D3uxQJ1McPj2x5XHd1-H6R0H_LiKM-TO6u0QouzaZ.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=iluvutu'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">iluvu</div>
+              <div class="text-xs text-slate-400 truncate">@iluvutu</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/fHm3sgqFaOxzmlPiOLi8xPLtBsdAYi83Jq6qQir5ewG-6IqvNm8V9QhnuuCAc9G9.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=MrVirusAgain'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">Mr Virus &lt;/🇧🇩&gt;</div>
+              <div class="text-xs text-slate-400 truncate">@MrVirusAgain</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-rose-500/15 text-rose-300">ADMIN</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/ck3h1vziJkdmRkGPSNHh5K_A_LAI6b7x0zwt0jr_n67y92dQvG8xBESpzTPQL-z2.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=ImEshu'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">⎯꯭⸼˹𝐌𝚁˼〄 ˹𝐃𝙰𝚇𝚇˼</div>
+              <div class="text-xs text-slate-400 truncate">@ImEshu</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/0pbclM1RACWsJnHaRuUH2slF4NnA3Up62A8v5oX_4ArHqhpQTWMTiJ3tUVUbZM9i.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=laduc'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">Ilja Laduc</div>
+              <div class="text-xs text-slate-400 truncate">@laduc</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/3nixhHKcB0Z2vixJ0y3P7Kz3CgPsi6suNARI9NAKaRL2X85ib4GRUhDaB--OOHq1.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=SSAEZZZ'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">SSAE ZZZ</div>
+              <div class="text-xs text-slate-400 truncate">@SSAEZZZ</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/4j4Qq9Xw4ixSBCuR3n7i5_n6GlhPZNW0rIYpJIvKKW9gVtDVY6kWF0AY5m78jyar.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Larasskmti'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">𝚈𝚊𝚜</div>
+              <div class="text-xs text-slate-400 truncate">@Larasskmti</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/XVw2FNu6aU6Ljg4XLAUCZoj8bZkqtLORQA05pcUTakaoLH77XyQR8fEYs4MsdRf2.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Imdevil6971'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">Devil_69</div>
+              <div class="text-xs text-slate-400 truncate">@Imdevil6971</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/iVZ2XBi5dgJ6qESEyAXdH7XUmK_0S6Lwty9wwmwBkiUElgMcFooP0BrzkubFIGAV.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=landi1001'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">• KURD •</div>
+              <div class="text-xs text-slate-400 truncate">@landi1001</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/Po4DPQrYE42HQvUb8dO7GJ-Z887Suhz02jmZprZhS61lLpfkQRl0-EPpQ4QgpslR.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=znnxl'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">lmg</div>
+              <div class="text-xs text-slate-400 truncate">@znnxl</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/8jgi6O6cHZIUregGJMPmdfAqlzDjkigvW9fjnr50VFoR6eZXV4OttbO9f26Dwecn.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Imposteronline'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">Goated</div>
+              <div class="text-xs text-slate-400 truncate">@Imposteronline</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/aY5bLAZdOrxz9BEwgm1X0K5GaZMC_yQHofFHonPKbVJqtdF4kZfWqQ-gtTmlzn0c.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=PRASHANT_GURJAR1'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">𝐏𝐑𝐀𝐒𝐇𝐀𝐍𝐓 𝐆𝐔𝐑𝐉𝐀𝐑 !!</div>
+              <div class="text-xs text-slate-400 truncate">@PRASHANT_GURJAR1</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/G0uAwatKaUrwt_31JgsybDQAy-MgbTOcTVQ3sYZdq-jkpCiuUi5b-dzL4MnHzBwT.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=JAWAD0107'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">S N I P E R</div>
+              <div class="text-xs text-slate-400 truncate">@JAWAD0107</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/NH2KWTwhybjV8tQ0Qv7ADnSvZZMHSsigq6H_BQevkQ8dWbJqNiYVVBREtkvNyXtQ.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=GIODIDI123'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">Gio Didi</div>
+              <div class="text-xs text-slate-400 truncate">@GIODIDI123</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/xHPju-kvNT7Ppz8PzOiht87Lwm5lLgaCnJfNMXtN7w3BSnIJ3JUCMkiCtWjLnmAr.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Aurxnn'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">MADDOXX</div>
+              <div class="text-xs text-slate-400 truncate">@Aurxnn</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/uqYGefkmoG8vpjlLCnXmK-w75QoG7ToZ7RlzK7jIQfnaCqOV_-akrVEm2aaW6C63.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=dimemayyy'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">𝑨𝒏𝒉 𝑴𝒂̀𝒚 𝑩𝒊𝒆̂́𝒕 𝑪𝒉𝒐̛𝒊</div>
+              <div class="text-xs text-slate-400 truncate">@dimemayyy</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/RUNTs60qPz29ISrw0Hg6oYz-bmfzDsWn44EYkc8_mIDG4J-2Lz4gKrH_34o3BEvc.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Iconic_Expart'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">Zero Strikes</div>
+              <div class="text-xs text-slate-400 truncate">@Iconic_Expart</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/LaSjojl4iEx-OrRkGzZ8ApN7bFJZZocIePC8thDaOz1B8hdujUGLsgUjPSMj1s3q.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Aizenking11'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">! Aizen</div>
+              <div class="text-xs text-slate-400 truncate">@Aizenking11</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/W98Ek9_0vvIL4BTVHVVLmeA4AGF0lWxlja7NHG_z3yhHhmP5e7Pq7SFF2VSBBUhn.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Wrymy'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">𝓓𝓐𝓡𝓚𝓑𝓘𝓝</div>
+              <div class="text-xs text-slate-400 truncate">@Wrymy</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/u_n4agAqA2mJPJirxOJJl2gkkbxRH9_lmm9lQh7obfqGA9meiGsitVdyl_BqgKrX.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=atsupbolibard'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium truncate">Atsup Molimard</div>
+              <div class="text-xs text-slate-400 truncate">@atsupbolibard</div>
+            </div>
+            <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>          </div>
+              </div>
+    </div>
+
+    <!-- Top Users -->
+    <div id="cardTopUsers" class="rounded-2xl bg-white/5 p-4 h-[45%]">
+      <div class="text-slate-300 text-sm mb-2">Top Users</div>
+      <div id="rightTopList" class="no-scrollbar h-[calc(100%_-_1.5rem)] space-y-2 pr-1">
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/PwmcLCrxz5mpDyteUeNJt6woChoAbUNRgMySdE5HutoLlE-4pAf2VtBPkE8Q24eI.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=premkanan'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">DIGI PLUS🌾 🇧🇩</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@premkanan</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">20,193 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/xaGpoEzua52vWqn8TOBSsfxtFTGUi12T0LmX-uIDL2CyT6KpOJVsV1zkn6QoHGNU.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Xonarch'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Xᴜᴇʙᴀ°</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@Xonarch</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">18,306 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/c2R28khwxN8Fyj3smRVVhw3VfQ3OwYFuBHV4S1QWZhw.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=w3ruw'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">iyan</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@w3ruw</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">6,539 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/2_mT7ARXJrZM0iPHb7uot69u-TG9Zm_KNZzATSp_tMqj5xz3WqJmXdvJJIz1FuZE.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Caorselnf'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Caoursel NF</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@Caorselnf</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">5,213 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/cOaMPE8vJHoZ30yTOADQUHFfIVr0K3SknzOJiQHDSTc.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=questcx'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">𝓠𝓾𝓮𝓼𝓽</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@questcx</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">3,230 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/E228WR8ZQKvcTh4R0_P1tuof4DzINyxPCBRu25k0PZR3jIy_Wd5m5u441KXGvGLz.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=NightAgent00'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Night Agent⚡</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@NightAgent00</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">3,204 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/wQTswE1iTn8d84Luv-GCl1ezPxgbDRGqHR6-aYVSyFo.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=suggest_me_a_good_username'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Mr. Nobody</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@suggest_me_a_good_username</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">2,859 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/xJrOqNb0zgE-xSYzYXiWODkxslVAUaOabLkh3FtXMk3xf1ZsDsdB24PJurvWBoTU.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=MrxHamad'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">ＭＲ ＨＡＭＡＤ</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@MrxHamad</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">2,817 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/IjstB34SUts1JbWPe8HBzOGMRiIz8CqllL8-uydmms4vU0h07H1ApueZPPDUwEUx.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Fb_ads_expert'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Md Shamim Reza</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@Fb_ads_expert</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">2,474 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/mea3LI0BdEgXMUqUN0H8FpCz6hbdUObmsnx61SrxRDjpHW7wLEVIGMcvZ4ucH8-N.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=ResearchLDT'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Deep Black</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@ResearchLDT</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">2,404 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/yn_qhiP3CplzAJ_3esYapiw0AcaSJ1UpJ8oUSgH3KR-I5WEweutrHwspzwHcaTmB.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=DronzerX1'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">NOT | SHENN</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@DronzerX1</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">2,117 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/WKkHzHHZsBHgjkIaYr8BmLhsHQO8PuarxDMSRaynF2sse9mUwn0_RS0g99rhKEKB.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=decimalji'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">COSMIC</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@decimalji</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">2,061 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/G0uAwatKaUrwt_31JgsybDQAy-MgbTOcTVQ3sYZdq-jkpCiuUi5b-dzL4MnHzBwT.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=JAWAD0107'">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">S N I P E R</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@JAWAD0107</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">2,030 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/RPPkqlsqUQxEA6RM_jNrx93bVcYmN3JtSbzgXFD8VQJdGhTARLN99zGIQK5iQZly.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=An0nym0usphreaker'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">🔥An0nym0us phreaker ᴴᵀᴹ {SQL}</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@An0nym0usphreaker</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">1,978 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/j_iwYXmdegO9NeojaXA3qOl3MBV0v7TQ833gngI7SwxZIpmw2KzZJ2bxIBaDGfOo.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=j_1_0'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">JIO</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@j_1_0</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">1,957 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/IML9hoF25M4qOPxfbjtsjqZHXcfphJf5HO0dbOfOx1g.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=drakennnnn_27'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">draven</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@drakennnnn_27</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">1,917 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/q_HGJYrlyVU87xgSuALvBcrf8EW-geDPt8FsZ3QxT4g93Z9cXoqv0LSb_G4RtWxd.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=azazelgen'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Azazel ＧＧＣ[ᚠ]</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-amber-500/15 text-amber-300">PREMIUM</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@azazelgen</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">1,817 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/c08-dv71-VM9dOwZ4d2VSwgw4WYkWrVkuC5eaJkpdsD74X3NnmqgfRk0pcUCuixS.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=CodeCracke'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Atomic</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@CodeCracke</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">1,747 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/sZTP9X-hWPNKnpM7BtTDmc5IrQXMc7c1zbc04TNcmn2KWaE1vGh5zUohwUrqMbzo.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=cendolive'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">DENNY.co</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@cendolive</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">1,726 Hits</div>
+          </div>
+                  <div class="user-tile flex items-center gap-3">
+            <div class="relative shrink-0">
+              <img src="https://t.me/i/userpic/320/EcwRYcc1GIUEoh0oTp7ZfTtXr7OnIZ-sxLkv8HULut1qzgNmO5R0tz-qhpEefDhF.jpg" class="w-10 h-10 rounded-lg object-cover" alt=""
+                   onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/shapes/svg?seed=Lalapos30'">
+                          </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-sm font-medium truncate">Naouget !</div>
+                <span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold bg-slate-500/20 text-slate-300">FREE</span>
+              </div>
+              <div class="text-xs text-slate-400 truncate">@Lalapos30</div>
+            </div>
+            <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">1,717 Hits</div>
+          </div>
+              </div>
+    </div>
+  </aside>
+</div>
+
+<!-- MODALS -->
+<div id="topModal" class="fixed inset-0 z-50 hidden"><div class="absolute inset-0 bg-black/60"></div>
+  <div class="absolute inset-x-4 md:inset-x-20 top-10 bottom-10 rounded-2xl bg-slate-900 border border-white/10 flex flex-col">
+    <div class="flex items-center justify-between p-4 border-b border-white/10">
+      <div class="font-semibold">Top Users</div>
+      <button data-close="topModal" class="rounded-md bg-white/10 hover:bg-white/20 p-2" aria-label="Close">
+        <!-- FIX: visible cross icon -->
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-4 flex-1 overflow-hidden">
+      <div id="topModalList" class="no-scrollbar h-full space-y-2 pr-1"></div>
+    </div>
+  </div>
+</div>
+
+<div id="onlineModal" class="fixed inset-0 z-50 hidden"><div class="absolute inset-0 bg-black/60"></div>
+  <div class="absolute inset-x-4 md:inset-x-20 top-10 bottom-10 rounded-2xl bg-slate-900 border border-white/10 flex flex-col">
+    <div class="flex items-center justify-between p-4 border-b border-white/10">
+      <div class="font-semibold">Online Users • <span id="modalOnlineNow">—</span></div>
+      <button data-close="onlineModal" class="rounded-md bg-white/10 hover:bg-white/20 p-2" aria-label="Close">
+        <!-- FIX: visible cross icon -->
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-4 flex-1 overflow-hidden">
+      <div id="onlineModalList" class="no-scrollbar h-full space-y-2 pr-1"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(w, d){
+  if (w.__CX_INIT__) return; w.__CX_INIT__ = true;
+  const $ = sel => d.querySelector(sel);
+  const nf = n => new Intl.NumberFormat().format(n|0);
+
+  // Live clock
+  const tickClock = () => { const el=$("#liveClock"); if(el) el.textContent=new Date().toLocaleTimeString(); };
+  tickClock(); setInterval(tickClock, 1000);
+
+  // Mobile sidebar open/close
+  const mSide = $("#mSide");
+  const mOverlay = $("#mOverlay");
+  function openMenu(){ if(!mSide) return; mSide.classList.add('open'); if(mOverlay){ mOverlay.classList.remove('hidden'); mOverlay.classList.add('show','z-40'); } }
+  function closeMenu(){ if(!mSide) return; mSide.classList.remove('open'); if(mOverlay){ mOverlay.classList.remove('show'); setTimeout(()=>mOverlay.classList.add('hidden'), 180); } }
+  $("#dockMenu")?.addEventListener('click', () => { if (mSide?.classList.contains('open')) closeMenu(); else openMenu(); });
+  mOverlay?.addEventListener('click', closeMenu);
+  w.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
+
+  // Heartbeat
+  const heartbeat = () => fetch('/api/heartbeat.php',{credentials:'same-origin'}).catch(()=>{});
+  heartbeat(); setInterval(heartbeat, 30000);
+  
+  // guard so it doesn't attach twice
+  if (!window.__CX_IDLE__) {
+    window.__CX_IDLE__ = true;
+
+    (function () {
+      const LIMIT = 2880 * 60 * 1000; // 10 minutes
+      let tm;
+
+      function resetTimer() {
+        clearTimeout(tm);
+        tm = setTimeout(() => {
+          // call server logout, then go to login with expired flag
+          fetch('/logout.php?timeout=1', { credentials: 'include' })
+            .finally(() => { location.href = '/?expired=1'; });
+        }, LIMIT);
+      }
+
+      ['click','mousemove','keydown','scroll','touchstart','visibilitychange']
+        .forEach(ev => document.addEventListener(ev, resetTimer, { passive:true }));
+
+      resetTimer();
+    })();
+  }
+
+  // Stats (if present)
+  async function fetchStats() {
+    try {
+      const r = await fetch('/api/stats.php', {credentials:'same-origin'}); if (!r.ok) return;
+      const j = await r.json(); if (!j.ok) return;
+      const map = { gTotalUsers:'total_users', gLiveCards:'live_cards', gChargeCards:'charge_cards', gTotalHits:'total_hits' };
+      Object.entries(map).forEach(([id,key])=>{ const el=d.getElementById(id); if (el) el.textContent = nf(j.data[key]); });
+      const rightNow = d.getElementById('rightOnlineNow'); if (rightNow) rightNow.textContent = j.data.online_now;
+    } catch(e){}
+  }
+  fetchStats(); setInterval(fetchStats, 10000);
+
+  // Tiles builder
+  function badge(status){
+    status=(status||'').toLowerCase();
+    const m={admin:['bg-rose-500/15','text-rose-300','ADMIN'],premium:['bg-amber-500/15','text-amber-300','PREMIUM'],banned:['bg-rose-500/15','text-rose-300','BANNED'],free:['bg-slate-500/20','text-slate-300','FREE']}[status]||['bg-slate-500/20','text-slate-300','FREE'];
+    return `<span class="inline-flex items-center rounded-md px-2 py-[2px] text-[10px] font-semibold ${m[0]} ${m[1]}">${m[2]}</span>`;
+  }
+  function tileOnline(u){
+    const img = u.profile ? u.profile : 'https://api.dicebear.com/7.x/shapes/svg?seed='+encodeURIComponent(u.username||'user');
+    return `
+      <div class="user-tile flex items-center gap-3">
+        <div class="relative shrink-0">
+          <img src="${img}" class="w-10 h-10 rounded-lg object-cover" alt="">
+          <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${u.is_online?'bg-emerald-400':'bg-slate-500'} ring-2 ring-slate-900"></span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="text-sm font-medium truncate">${(u.full_name||u.username||'user')}</div>
+          <div class="text-xs text-slate-400 truncate">@${(u.username||'user')}</div>
+        </div>
+        ${badge(u.status)}
+      </div>`;
+  }
+  function tileTop(u){
+    const img = u.profile ? u.profile : 'https://api.dicebear.com/7.x/shapes/svg?seed='+encodeURIComponent(u.username||'user');
+    return `
+      <div class="user-tile flex items-center gap-3">
+        <div class="relative shrink-0">
+          <img src="${img}" class="w-10 h-10 rounded-lg object-cover" alt="">
+          ${u.is_online ? `<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>` : ``}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <div class="text-sm font-medium truncate">${(u.full_name||u.username||'user')}</div>
+            ${badge(u.status)}
+          </div>
+          <div class="text-xs text-slate-400 truncate">@${(u.username||'user')}</div>
+        </div>
+        <div class="text-xs rounded-md px-2 py-0.5 bg-violet-500/15 text-violet-300 font-medium">${nf(u.hits||0)} Hits</div>
+      </div>`;
+  }
+
+  async function fetchUsers(scope, targetId) {
+    try {
+      const r = await fetch('/api/online_users.php?scope='+encodeURIComponent(scope)+'&limit=100', {credentials:'same-origin'});
+      const j = await r.json(); if (!j.ok) return;
+      if (scope==='online') { const els=[d.getElementById('rightOnlineNow'), d.getElementById('modalOnlineNow')]; els.forEach(el=>{ if(el) el.textContent = j.count ?? (j.users?.length||0); }); }
+      const box = d.getElementById(targetId); if (!box) return;
+      const arr = Array.isArray(j.users)? j.users : [];
+      box.innerHTML = arr.map(u => scope==='top' ? tileTop(u) : tileOnline(u)).join('') ||
+        `<div class="text-sm text-slate-500">${scope==='top'?'No data.':'No one online.'}</div>`;
+    } catch(e){}
+  }
+
+  if (d.getElementById('rightOnlineList')) {
+    fetchUsers('online','rightOnlineList'); fetchUsers('top','rightTopList');
+    setInterval(()=>{ fetchUsers('online','rightOnlineList'); fetchUsers('top','rightTopList'); },15000);
+  }
+
+  // Modals (mobile)
+  const topModal = d.getElementById('topModal');
+  const onlineModal = d.getElementById('onlineModal');
+  d.getElementById('dockTop')?.addEventListener('click', () => { topModal?.classList.remove('hidden'); fetchUsers('top','topModalList'); });
+  d.getElementById('dockOnline')?.addEventListener('click', () => { onlineModal?.classList.remove('hidden'); fetchUsers('online','onlineModalList'); });
+  d.querySelectorAll('[data-close]')?.forEach(btn => btn.addEventListener('click', () => d.getElementById(btn.dataset.close)?.classList.add('hidden')));
+  [topModal, onlineModal].forEach(m => m?.addEventListener('click', (e) => { if (e.target === m.firstElementChild) m.classList.add('hidden'); }));
+})(window, document);
+</script>
+</body>
+</html>
